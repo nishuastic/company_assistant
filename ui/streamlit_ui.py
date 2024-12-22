@@ -6,7 +6,9 @@ BASE_API_URL = "http://localhost:8000"
 st.title("LinkedIn Generator and Value App")
 
 # Sidebar for navigation
-option = st.sidebar.selectbox("Choose Functionality", ["LinkedIn Generator", "Value App"])
+option = st.sidebar.selectbox(
+    "Choose Functionality", ["LinkedIn Generator", "Value App"]
+)
 
 # Initialize session state for `base_url` and `analysis_result`
 if "base_url" not in st.session_state:
@@ -37,21 +39,31 @@ if option == "LinkedIn Generator":
             st.success("Generated Note:")
             st.write(response.json()["note"])
         else:
-            st.error(f"Failed to generate note: {response.json().get('detail', 'Unknown Error')}")
+            st.error(
+                f"Failed to generate note: {response.json().get('detail', 'Unknown Error')}"
+            )
 
 # Value App functionality
 elif option == "Value App":
     st.subheader("Analyze Competitor Website")
     # Input field for website URL
-    base_url = st.text_input("Website URL", value=st.session_state.base_url or "", placeholder="Enter competitor's website URL")
+    base_url = st.text_input(
+        "Website URL",
+        value=st.session_state.base_url or "",
+        placeholder="Enter competitor's website URL",
+    )
     if st.button("Analyze"):
         st.session_state.base_url = base_url
-        response = requests.get(f"{BASE_API_URL}/value/analyze", params={"base_url": base_url})
+        response = requests.get(
+            f"{BASE_API_URL}/value/analyze", params={"base_url": base_url}
+        )
         if response.status_code == 200:
             st.success("Website Analyzed Successfully!")
             st.session_state.analysis_result = response.json()
         else:
-            st.error(f"Failed to analyze website: {response.json().get('detail', 'Unknown Error')}")
+            st.error(
+                f"Failed to analyze website: {response.json().get('detail', 'Unknown Error')}"
+            )
 
     # Chat with the vectorstore
     if st.session_state.analysis_result:
@@ -62,11 +74,14 @@ elif option == "Value App":
                 "base_url": st.session_state.base_url,
                 "query": query,
             }
-            chat_response = requests.post(f"{BASE_API_URL}/value/chat", json=chat_payload)
-            
+            chat_response = requests.post(
+                f"{BASE_API_URL}/value/chat", json=chat_payload
+            )
+
             if chat_response.status_code == 200:
                 st.success("Chatbot Response:")
                 st.write(chat_response.json()["response"])
             else:
-                st.error(f"Failed to query the vectorstore: {chat_response.json().get('detail', 'Unknown Error')}")
-
+                st.error(
+                    f"Failed to query the vectorstore: {chat_response.json().get('detail', 'Unknown Error')}"
+                )

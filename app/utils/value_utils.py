@@ -17,6 +17,7 @@ load_dotenv()
 CACHE_DIR = "cache"
 client = OpenAI(api_key=os.getenv("OPENAI_API_KEY"))
 
+
 # Function to crawl homepage and collect URLs with titles
 def crawl_homepage(base_url):
     visited_urls = set()
@@ -52,21 +53,20 @@ def analyze_titles_with_openai(titles):
     messages = [
         {
             "role": "system",
-            "content": '''You are an assistant that analyzes a list of page titles and identifies their relevance. 
+            "content": """You are an assistant that analyzes a list of page titles and identifies their relevance. 
             Our purpose is to find relevant pages of our competitors which might help us understand their pricing,
-            sales channels, value propositions.'''
+            sales channels, value propositions.""",
         },
         {
             "role": "user",
-            "content": f"Here is a list of page titles: {', '.join(titles)}. Please check the titles and only return those which might be relevant to us. No text. Just a list of titles without indexing in the same formating that was given to you."
-        }
+            "content": f"Here is a list of page titles: {', '.join(titles)}. Please check the titles and only return those which might be relevant to us. No text. Just a list of titles without indexing in the same formating that was given to you.",
+        },
     ]
 
     try:
         print("Sending titles to OpenAI for analysis...")
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
-            messages=messages
+            model="gpt-3.5-turbo", messages=messages
         )
         return response.choices[0].message.content.strip()
     except Exception as e:
@@ -82,11 +82,11 @@ def fetch_and_filter_relevant_pages(base_url, relevant_titles, all_pages):
     for page in relevant_pages:
         try:
             print(f"Fetching relevant page: {page['url']}")
-            response = requests.get(page['url'], timeout=10)
+            response = requests.get(page["url"], timeout=10)
             if response.status_code == 200:
                 soup = BeautifulSoup(response.text, "html.parser")
                 text = soup.get_text(separator=" ", strip=True)
-                filtered_content[page['url']] = text
+                filtered_content[page["url"]] = text
             else:
                 print(f"Failed to fetch {page['url']}: {response.status_code}")
         except Exception as e:
@@ -117,16 +117,23 @@ def create_langchain_context(filtered_content):
     text_splitter = CharacterTextSplitter(chunk_size=1000, chunk_overlap=200)
 
     # Convert filtered_content to the expected format
-    documents = [{"page_content": content, "metadata": {"source": url}} for url, content in filtered_content.items()]
+    documents = [
+        {"page_content": content, "metadata": {"source": url}}
+        for url, content in filtered_content.items()
+    ]
 
     # Split the documents into smaller chunks
     split_documents = []
     for doc in documents:
         chunks = text_splitter.split_text(doc["page_content"])
-        split_documents.extend([{"page_content": chunk, "metadata": doc["metadata"]} for chunk in chunks])
+        split_documents.extend(
+            [{"page_content": chunk, "metadata": doc["metadata"]} for chunk in chunks]
+        )
 
     embeddings = OpenAIEmbeddings(openai_api_key=os.getenv("OPENAI_API_KEY"))
-    vectorstore = FAISS.from_documents([Document(**doc) for doc in split_documents], embeddings)
+    vectorstore = FAISS.from_documents(
+        [Document(**doc) for doc in split_documents], embeddings
+    )
 
     return vectorstore
 
