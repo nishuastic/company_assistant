@@ -101,7 +101,7 @@ By default, it runs at http://localhost:8000.
 
 2. Start the Streamlit UI. The frontend is built using Streamlit. Start the UI with:
 ```bash
-streamlit run app/streamlit_ui.py
+streamlit run ui/streamlit_ui.py
 ```
 The UI will open in your default browser, typically at http://localhost:8501
 
